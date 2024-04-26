@@ -11,7 +11,9 @@ Este repositorio contiene lo construido para el proyecto final de la materia Fun
 + **Mauricio Muñoz** - Monitor de clase
 
 ### Universidad del valle
-(https://drive.google.com/drive/u/1/folders/0BzGoTc_BVojJVUFmQnIzb2xUWGc?resourcekey=0-JQ-xEYXlb6CKnoBGQo6omg)
+<p align="center">
+  <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR5qyFsU8I_nJx3odwXRFQxYUL8ImQJY5rHx7NWwIPS7pzpPNX2eBkuz90eqH9xHwBhd1g&usqp=CAU" alt="Logo Univalle">
+</p>
 
 ## Sintesis
 Este proyecto tiene como objetivo la implementación de un lenguaje de programación con ayuda de PyGraph. PyGraph permitirá la manipulación de datos, incluyendo la creación y manejo de grafos no dirigidos.
