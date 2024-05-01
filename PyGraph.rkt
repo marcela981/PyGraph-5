@@ -133,13 +133,25 @@
     
     (expresion (lista) lista-exp)
     (lista ("empty") empty-list)
-    (lista ("[" (separated-list expresion ",") "]") lista1) ;;C++
+    (lista ("lenght") lenght-list)
+    (lista ("[" (separated-list expresion ";") "]") lista1) ;;C++
 
-    (expresion (exp-bool) bool-exp)  
-    (exp-bool (pred-prim "(" expresion "," expresion ")") comparacion) ;;DrRacket
-    (exp-bool (oper-bin-bool "(" exp-bool "," exp-bool ")") conjuncion) ;;DrRacket
-    (exp-bool (bool) vlr-bool)
-    (exp-bool (oper-un-bool "(" exp-bool ")") op-comp) 
+    (expresion (vector) vector-exp)
+    (vector ("empty") empty-vector)
+    (vector ("lenght") lenght-vector)
+    (vector ("concat") concat-vector)
+    (vector ("[" (separated-list expresion ";") "]") vector1) ;;C++                            
+
+    (expresion (registro) registro-exp)
+    (registro ("empty") empty-registro)
+    (registro ("delete") delete-registro)
+    (registro ("[" (separated-list expresion ";") "]") registro1) ;;C++        
+
+    (expresion (expr-bool) bool-exp)  
+    (expr-bool (pred-prim "(" expresion "," expresion ")") comparacion) ;;DrRacket
+    (expr-bool (oper-bin-bool "(" expr-bool "," exp-bool ")") conjuncion) ;;DrRacket
+    (expr-bool (bool) vlr-bool)
+    (expr-bool (oper-un-bool "(" expr-bool ")") op-comp) 
     (bool ("true") true-exp)
     (bool ("false") false-exp)
 
