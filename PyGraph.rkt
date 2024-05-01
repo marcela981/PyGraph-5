@@ -142,5 +142,42 @@
     (exp-bool (oper-un-bool "(" exp-bool ")") op-comp) 
     (bool ("true") true-exp)
     (bool ("false") false-exp)
+
+    ;************primitivas unarias************
+
+    (primitiva-unaria ("add1") add1)
+    (primitiva-unaria ("sub1") sub1)    
+    (primitiva-unaria ("add1x8") add1x8)
+    (primitiva-unaria ("sub1x8") sub1x8)
+    (primitiva-unaria ("add1x16") add1x16)
+    (primitiva-unaria ("sub1x16") sub1x16)
+    (primitiva-unaria ("add1x32") add1x32)
+    (primitiva-unaria ("sub1x32") sub1x32)
+    (primitiva-unaria ("lenght") lenght-exp)   
+    (primitiva-unaria ("list?") lista?-exp)
+    (primitiva-unaria ("car") car-exp)
+    (primitiva-unaria ("cdr") cdr-exp)
+
+    ;************primitivas binarias************
+    
+    (primitiva-binaria ("+") suma)
+    (primitiva-binaria ("-") resta)
+    (primitiva-binaria ("*") mult)
+    (primitiva-binaria ("%") modulo-b)
+    (primitiva-binaria ("/") division)
+    
+    (primitiva-binaria ("concat") concat-exp)
+    (primitiva-binaria ("append") append-exp)
+    (primitiva-binaria ("cons") crear-lista-exp)
+        
+    (pred-prim ("<") menor-exp)
+    (pred-prim (">") mayor-exp)
+    (pred-prim ("<=") menor=exp)
+    (pred-prim (">=") mayor=exp)
+    (pred-prim ("==") igual=exp)
+    (pred-prim ("<>") diferente-exp)
+    (oper-bin-bool ("and") and-exp)
+    (oper-bin-bool ("or") or-exp)
+    (oper-un-bool ("not") not-exp)
     )
   )
