@@ -90,7 +90,7 @@
 <bool>               ::= true | false
 |#
 
-;;************************************************************Lexico************************************************************
+;;************************************************************Especificación Léxica************************************************************
 (define lexico
   '(
     (white-sp (whitespace) skip)
@@ -103,5 +103,44 @@
     (numero (digit (arbno digit) "." digit (arbno digit)) number)
     (numero ("-" digit (arbno digit)) number)
     (numero ("-" digit (arbno digit) "." digit (arbno digit)) number)
+    )
+  )
+
+;;************************************************************Especificación Sintáctica************************************************************
+(define gramatica
+  '(    
+    (pyGraph (expresion)  pyGraph-program )  
+    (expresion (numero) numero-lit)
+    
+    (expresion ("'" letras "'") caracter-exp) ;; Python
+    (expresion ("\"\"" letras "\"\"") cadena-exp) ;; C++
+    (expresion (identificador) identificador-exp) ;; C++
+    
+    (expresion ("var" (separated-list identificador "=" expresion ",") "in" expresion)  var-exp)  ;;JavaScript
+    (expresion ("const" (separated-list identificador "=" expresion ",") "in" expresion)  const-exp) ;; JavaScript
+    (expresion ("rec" (arbno identificador "(" (separated-list identificador ",") ")" "=" expresion)  "in" expresion) rec-exp) ;;Python
+           
+    (expresion (primitiva-binaria "(" expresion "," expresion ")") primbin-exp) ;;DrRacket
+    (expresion (primitiva-unaria "(" expresion ")") primun-exp) ;; Python
+    (expresion ("proc" "(" (separated-list identificador ",") ")" expresion) proc-exp)
+    (expresion ("(" expresion (arbno expresion) ")") app-exp)
+    
+    (expresion ("begin" expresion (arbno ";" expresion) "end") begin-exp)
+    (expresion ("if" exp-bool "then" expresion "else" expresion "end") if-exp) 
+    (expresion ("while" exp-bool "do" expresion "end") while-exp)
+    (expresion ("for" identificador "=" expresion ("to") expresion "do" expresion "end") for-exp)
+
+    
+    (expresion (lista) lista-exp)
+    (lista ("empty") empty-list)
+    (lista ("[" (separated-list expresion ",") "]") lista1) ;;C++
+
+    (expresion (exp-bool) bool-exp)  
+    (exp-bool (pred-prim "(" expresion "," expresion ")") comparacion) ;;DrRacket
+    (exp-bool (oper-bin-bool "(" exp-bool "," exp-bool ")") conjuncion) ;;DrRacket
+    (exp-bool (bool) vlr-bool)
+    (exp-bool (oper-un-bool "(" exp-bool ")") op-comp) 
+    (bool ("true") true-exp)
+    (bool ("false") false-exp)
     )
   )
