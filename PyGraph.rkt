@@ -89,3 +89,19 @@
 <oper-un-bool>       ::= not
 <bool>               ::= true | false
 |#
+
+;;************************************************************Lexico************************************************************
+(define lexico
+  '(
+    (white-sp (whitespace) skip)
+    (comment ("//" (not #\newline)) skip)
+    (comment ("/*" (not "*/") "*/") skip)
+    (identificador ("@" letter (arbno (or letter digit))) symbol)
+    (letras (letter) string)
+    (letras (letter (arbno (or letter digit))) string)    
+    (numero (digit (arbno digit)) number)
+    (numero (digit (arbno digit) "." digit (arbno digit)) number)
+    (numero ("-" digit (arbno digit)) number)
+    (numero ("-" digit (arbno digit) "." digit (arbno digit)) number)
+    )
+  )
