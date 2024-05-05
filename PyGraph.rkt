@@ -30,6 +30,16 @@
                 lista-exp (lista)            
             ::= <vector>
                 vector-exp (vector)
+            ::= <ejes>
+                ejes-exp (vertices1, vertices2)
+            ::= <vertices>
+                vertices-exp (vertices)
+            ::= <grafo>
+                grafo-exp (vertices, ejes)
+            ::= <lista_vertices>
+                lista_vertices-exp (vertices)
+            ::= <lista_ejes>
+                lista_ejes-exp (ejes)
             ::= <registro>
                 registro-exp (registro)
             ::= begin {<expresion>}+(;) end
@@ -67,6 +77,49 @@
                          concat-vector
                      ::= [{<expresion>}*(;)]
                          vector1 (lexps)
+
+<grafo>             ::= empty
+                        empty-grafo
+                    ::= lenght
+                        lenght-grafo
+                    ::= [{<lista_vertices> <lista_ejes>}]
+                        graph1 (vertices, ejes)
+
+<ejes>              ::= empty
+                        empty-ejes
+                    ::= lenght
+                        lenght-ejes
+                    ::= concat
+                        concat-ejes
+                    ::= [{<expresion>, <expresion>}*(;)]
+                        ejes1 (vertices)
+
+<vertices>          ::= empty
+                        empty-vertices
+                    ::= lenght
+                        lenght-vertices
+                    ::= concat
+                        concat-vertices
+                    ::= [{<expresion>}*(;)]
+                        vertices1 (lexps)
+
+<lista_vertices>    ::= empty
+                        empty-lista_vertices
+                    ::= lenght
+                        lenght-lista_vertices
+                    ::= concat
+                        concat-lista_vertices
+                    ::= [{<expresion>}*(;)]
+                        lista_vertices1 (lexps)
+
+<lista_ejes>        ::= empty
+                        empty-lista_ejes
+                    ::= lenght
+                        lenght-lista_ejes
+                    ::= concat
+                        concat-lista_ejes
+                    ::= [{<expresion>}*(;)]
+                        lista_ejes1 (lexps)
 
 <registro>           ::= empty
                          empty-registro
@@ -140,7 +193,36 @@
     (vector ("empty") empty-vector)
     (vector ("lenght") lenght-vector)
     (vector ("concat") concat-vector)
-    (vector ("[" (separated-list expresion ";") "]") vector1) ;;C++                            
+    (vector ("[" (separated-list expresion ";") "]") vector1) ;;C++
+
+    (expresion (grafo) grafo-exp)
+    (grafo ("empty") empty-grafo)
+    (grafo ("lenght") lenght-grafo)
+    (grafo ("{" (separated-list vertices, ejes ";") "}") grafo1)
+
+    (expresion (ejes) ejes-exp)
+    (ejes ("empty") empty-ejes)
+    (ejes ("lenght") lenght-ejes)
+    (ejes ("concat") concat-ejes)
+    (ejes ("{" (separated-list expresion, expresion ";") "}") ejes1)
+
+    (expresion (vertices) vertices-exp)
+    (vertices ("empty") empty-vertices)
+    (vertices ("lenght") lenght-vertices)
+    (vertices ("concat") concat-vertices)
+    (vertices ("{" (separated-list expresion ";") "}") vertices1)
+
+    (expresion (lista_ejes) lista_ejes-exp)
+    (lista_ejes ("empty") empty-lista_ejes)
+    (lista_ejes ("lenght") lenght-lista_ejes)
+    (lista_ejes ("concat") concat-lista_ejes)
+    (lista_ejes ("{" (separated-list expresion ";") "}") lista_ejes1)
+
+    (expresion (lista_vertices) lista_vertices-exp)
+    (lista_vertices ("empty") empty-lista_vertices)
+    (lista_vertices ("lenght") lenght-lista_vertices)
+    (lista_vertices ("concat") concat-lista_vertices)
+    (lista_vertices ("{" (separated-list expresion ";") "}") lista_vertices1)
 
     (expresion (registro) registro-exp)
     (registro ("empty") empty-registro)
@@ -193,3 +275,36 @@
     (oper-un-bool ("not") not-exp)
     )
   )
+
+;************************************************************************************************************************************************************
+
+;; Tipos de datos para la sintaxis
+(sllgen:make-define-datatypes lexico gramatica)
+
+;;scan&parse: -> parser
+;; Parser - Analizador sintáctico
+(define scan&parse
+  (sllgen:make-string-parser lexico gramatica))
+
+;;show-the-datatypes: -> void
+;; Función para mostrar los tipos de datos definidos
+(define show-the-datatypes
+  (lambda () (sllgen:list-define-datatypes lexico gramatica)))
+
+;;just-scan: -> scanner
+;; Scanner - Analizador léxico
+(define just-scan
+  (sllgen:make-string-scanner lexico gramatica))
+
+
+
+;;Frontend + Evaluación + señal para lectura - Interpretador
+(define interpretador
+  (sllgen:make-rep-loop  "-> "
+     (lambda (pgm) (eval-program  pgm)) 
+       (sllgen:make-stream-parser 
+               lexico
+               gramatica)
+       )
+  )
+
