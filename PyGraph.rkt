@@ -287,3 +287,50 @@
        )
   )
 
+;eval-program: <programa> -> numero
+; función que evalúa un programa teniendo en cuenta un ambiente dado (se inicializa dentro del programa)
+
+(define eval-program
+  (lambda (pgm)
+    (cases pyGraph pgm
+      (pyGraph-program (body)
+                      (eval-expression body (init-env))))))
+
+; Ambiente inicial
+(define init-env
+  (lambda ()
+    (extend-env
+     '(@x @y @z)
+     '(1 2 3)
+     (empty-env))))
+
+(define eval-expression
+  (lambda (exp env)
+    (cases expresion exp)))
+
+(define eval-expression
+  (lambda (exp env)
+    (cases expresion exp
+      (num-exp (datum) datum)
+      (cadena-exp (string) string)
+      (oct-exp (lnum) lnum)
+      (hex-exp (lnum) lnum)
+      (big-exp (lnum) lnum)
+      (lista-exp (lexps) (eval-lista lexps env))
+      (vector-exp (lexps) (eval-vector lexps env))
+      (identificador-exp (id) (apply-env env id))
+      (primun-exp (op exp) (eval-unprim op (eval-expression exp env)))
+      (primbin-exp (op exp1 exp2)
+                   (eval-binprim op
+                                 (eval-expression exp1 env)
+                                 (eval-expression exp2 env)))
+      (var-exp (ids rands body) (let ((args (eval-rands rands env)))
+                 (eval-expression body (extend-env ids args env))))
+      (rec-exp (proc-names idss bodies letrec-body)
+               (eval-expression letrec-body
+                                (extend-env-recursively proc-names idss bodies env)))
+      (begin-exp (exp lexps) (eval-begin exp lexps env))
+      (if-exp (exp-bool true-exp false-exp)
+              (if (eval-bool-exp exp-bool env)
+                  (eval-expression true-exp env)
+                  (eval-expression false-exp env))))))
