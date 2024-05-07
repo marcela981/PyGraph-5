@@ -130,7 +130,7 @@
 
 <expr-bool>          ::= <pred-prim> (<expresion> , <expresion>)
                          comparacion (pprim exp1 exp2)
-                     ::= <oper-bin-bool> (<exp-bool> , <exp-bool>)
+                     ::= <oper-bin-bool> (<expr-bool> , <expr-bool>)
                          conjuncion (obbool expb1 expb2)
                      ::= <bool>
                          vlr-bool (bool)
@@ -148,7 +148,6 @@
   '(
     (white-sp (whitespace) skip)
     (comment ("//" (not #\newline)) skip)
-    (comment ("/*" (not "*/") "*/") skip)
     (identificador ("@" letter (arbno (or letter digit))) symbol)
     (letras (letter) string)
     (letras (letter (arbno (or letter digit))) string)    
@@ -169,8 +168,8 @@
     (expresion ("\"\"" letras "\"\"") cadena-exp) ;; C++
     (expresion (identificador) identificador-exp) ;; C++
     
-    (expresion ("var" (separated-list identificador "=" expresion ",") "in" expresion)  var-exp)  ;;JavaScript
-    (expresion ("const" (separated-list identificador "=" expresion ",") "in" expresion)  const-exp) ;; JavaScript
+    (expresion ("var" (separated-list identificador "=" expresion ",") "in" expresion)  var-exp) 
+    (expresion ("const" (separated-list identificador "=" expresion ",") "in" expresion)  const-exp) 
     (expresion ("rec" (arbno identificador "(" (separated-list identificador ",") ")" "=" expresion)  "in" expresion) rec-exp) ;;Python
            
     (expresion (primitiva-binaria "(" expresion "," expresion ")") primbin-exp) ;;DrRacket
@@ -179,59 +178,39 @@
     (expresion ("(" expresion (arbno expresion) ")") app-exp)
     
     (expresion ("begin" expresion (arbno ";" expresion) "end") begin-exp)
-    (expresion ("if" exp-bool "then" expresion "else" expresion "end") if-exp) 
-    (expresion ("while" exp-bool "do" expresion "end") while-exp)
-    (expresion ("for" identificador "=" expresion ("to") expresion "do" expresion "end") for-exp)
-
+    (expresion ("if" expr-bool "then" expresion "else" expresion "end") if-exp)
+    (expresion ("while" expr-bool "do" expresion "done") while-exp)
+    (expresion ("for" identificador "=" expresion "to" expresion "do" expresion "done") for-exp)
+    
     
     (expresion (lista) lista-exp)
     (lista ("empty") empty-list)
-    (lista ("lenght") lenght-list)
-    (lista ("[" (separated-list expresion ";") "]") lista1) ;;C++
+    (lista ("{ lista" (separated-list expresion ";") "}") lista1) ;;C++
 
     (expresion (vector) vector-exp)
-    (vector ("empty") empty-vector)
-    (vector ("lenght") lenght-vector)
-    (vector ("concat") concat-vector)
-    (vector ("[" (separated-list expresion ";") "]") vector1) ;;C++
+    (vector ("{ vector" (separated-list expresion ";") "}") vector1)
 
     (expresion (grafo) grafo-exp)
-    (grafo ("empty") empty-grafo)
-    (grafo ("lenght") lenght-grafo)
-    (grafo ("{" (separated-list vertices, ejes ";") "}") grafo1)
+    (grafo ("{ grafo" (separated-list expresion expresion ";") "}") grafo1)
 
     (expresion (ejes) ejes-exp)
-    (ejes ("empty") empty-ejes)
-    (ejes ("lenght") lenght-ejes)
-    (ejes ("concat") concat-ejes)
-    (ejes ("{" (separated-list expresion, expresion ";") "}") ejes1)
+    (ejes ("{ eje" (separated-list expresion expresion ";") "}") ejes1)
 
     (expresion (vertices) vertices-exp)
-    (vertices ("empty") empty-vertices)
-    (vertices ("lenght") lenght-vertices)
-    (vertices ("concat") concat-vertices)
-    (vertices ("{" (separated-list expresion ";") "}") vertices1)
+    (vertices ("{ vertice" (separated-list expresion ";") "}") vertices1)
 
     (expresion (lista_ejes) lista_ejes-exp)
-    (lista_ejes ("empty") empty-lista_ejes)
-    (lista_ejes ("lenght") lenght-lista_ejes)
-    (lista_ejes ("concat") concat-lista_ejes)
-    (lista_ejes ("{" (separated-list expresion ";") "}") lista_ejes1)
+    (lista_ejes ("{ lista_ejes" (separated-list expresion ";") "}") lista_ejes1)
 
     (expresion (lista_vertices) lista_vertices-exp)
-    (lista_vertices ("empty") empty-lista_vertices)
-    (lista_vertices ("lenght") lenght-lista_vertices)
-    (lista_vertices ("concat") concat-lista_vertices)
-    (lista_vertices ("{" (separated-list expresion ";") "}") lista_vertices1)
+    (lista_vertices ("{ lista_vertices" (separated-list expresion ";") "}") lista_vertices1)
 
     (expresion (registro) registro-exp)
-    (registro ("empty") empty-registro)
-    (registro ("delete") delete-registro)
-    (registro ("[" (separated-list expresion ";") "]") registro1) ;;C++        
+    (registro ("{ registro" (separated-list identificador "=" expresion ";") "}") registro1) ;;C++        
 
-    (expresion (expr-bool) bool-exp)  
+    (expresion (expr-bool) bool-expr)  
     (expr-bool (pred-prim "(" expresion "," expresion ")") comparacion) ;;DrRacket
-    (expr-bool (oper-bin-bool "(" expr-bool "," exp-bool ")") conjuncion) ;;DrRacket
+    (expr-bool (oper-bin-bool "(" expr-bool "," expr-bool ")") conjuncion) ;;DrRacket
     (expr-bool (bool) vlr-bool)
     (expr-bool (oper-un-bool "(" expr-bool ")") op-comp) 
     (bool ("true") true-exp)
@@ -247,7 +226,7 @@
     (primitiva-unaria ("sub1x16") sub1x16)
     (primitiva-unaria ("add1x32") add1x32)
     (primitiva-unaria ("sub1x32") sub1x32)
-    (primitiva-unaria ("lenght") lenght-exp)   
+    (primitiva-unaria ("lenght") lenght-exp)
     (primitiva-unaria ("list?") lista?-exp)
     (primitiva-unaria ("car") car-exp)
     (primitiva-unaria ("cdr") cdr-exp)
