@@ -66,67 +66,34 @@
                          empty-list
                      ::= lenght
                          lenght-list
-                     ::= [{<expresion>}*(;)]
-                         lista1 (lexps)
+
 
 <vector>             ::= empty
                          empty-vector
-                     ::= lenght
-                         lenght-vector
-                     ::= concat
-                         concat-vector
-                     ::= [{<expresion>}*(;)]
-                         vector1 (lexps)
+
 
 <grafo>             ::= empty
                         empty-grafo
-                    ::= lenght
-                        lenght-grafo
-                    ::= [{<lista_vertices> <lista_ejes>}]
-                        graph1 (vertices, ejes)
+
 
 <ejes>              ::= empty
                         empty-ejes
-                    ::= lenght
-                        lenght-ejes
-                    ::= concat
-                        concat-ejes
-                    ::= [{<expresion>, <expresion>}*(;)]
-                        ejes1 (vertices)
+                    
 
 <vertices>          ::= empty
                         empty-vertices
-                    ::= lenght
-                        lenght-vertices
-                    ::= concat
-                        concat-vertices
-                    ::= [{<expresion>}*(;)]
-                        vertices1 (lexps)
+                    
 
 <lista_vertices>    ::= empty
                         empty-lista_vertices
-                    ::= lenght
-                        lenght-lista_vertices
-                    ::= concat
-                        concat-lista_vertices
-                    ::= [{<expresion>}*(;)]
-                        lista_vertices1 (lexps)
-
+                   
 <lista_ejes>        ::= empty
                         empty-lista_ejes
-                    ::= lenght
-                        lenght-lista_ejes
-                    ::= concat
-                        concat-lista_ejes
-                    ::= [{<expresion>}*(;)]
-                        lista_ejes1 (lexps)
+                    
 
 <registro>           ::= empty
                          empty-registro
-                     ::= delete
-                         delete-registro
-                     ::= { {<identificador> = <expresion> } + (;) }
-                         registro1 (lexps)
+                    
 
 <expr-bool>          ::= <pred-prim> (<expresion> , <expresion>)
                          comparacion (pprim exp1 exp2)
@@ -304,18 +271,12 @@
      '(1 2 3)
      (empty-env))))
 
-(define eval-expression
-  (lambda (exp env)
-    (cases expresion exp)))
 
 (define eval-expression
   (lambda (exp env)
     (cases expresion exp
-      (num-exp (datum) datum)
+      (numero-lit (datum) datum)
       (cadena-exp (string) string)
-      (oct-exp (lnum) lnum)
-      (hex-exp (lnum) lnum)
-      (big-exp (lnum) lnum)
       (lista-exp (lexps) (eval-lista lexps env))
       (vector-exp (lexps) (eval-vector lexps env))
       (identificador-exp (id) (apply-env env id))
@@ -329,8 +290,113 @@
       (rec-exp (proc-names idss bodies letrec-body)
                (eval-expression letrec-body
                                 (extend-env-recursively proc-names idss bodies env)))
-      (begin-exp (exp lexps) (eval-begin exp lexps env))
+      (bool-expr (expr-bool)
+                (eval-bool-exp expr-bool env))
       (if-exp (exp-bool true-exp false-exp)
               (if (eval-bool-exp exp-bool env)
                   (eval-expression true-exp env)
-                  (eval-expression false-exp env))))))
+                  (eval-expression false-exp env)))
+      (proc-exp (ids body)
+                (closure ids body env))
+      (app-exp (rator rands)
+               (let ((proc (eval-expression rator env))
+                     (args (eval-rands rands env)))
+                 (if (procval? proc)
+                     (apply-procedure proc args)
+                     (eopl:error 'eval-expression "Attempt to apply non-procedure ~s" proc))))
+      (begin-exp (exp lexps)
+                 (if (null? lexps)
+                     (eval-expression exp env)
+                     (letrec [(recorrer (lambda (L)
+                                          (cond [(null? (cdr L)) (eval-expression (car L) env)]
+                                                [else (begin (eval-expression (car L) env)
+                                                            (recorrer (cdr L)))]))
+                       (begin (eval-expression exp env)
+                              (recorrer lexps)))])))
+(grafo-exp (grafo)
+                 (let ((vertices (grafo-vertices grafo))
+                       (ejes (grafo-ejes grafo)))
+                   (make-grafo (eval-vertices vertices env) (eval-ejes ejes env))))
+      (vertices-exp (label)
+                  (make-vertices label))
+     (ejes-exp (ejes-list)
+                (eval-ejes ejes-list env))
+      (else (eopl:error "Error! the variable ~s is not defined")))
+    ))
+
+;; Representación de un ambiente
+;; Se define un ambiente y dentro de ese se representa otro ambiente
+(define-datatype environment environment?
+  (empty-env-record)
+  (extended-env-record
+    (syms (list-of symbol?))  
+    (vals (list-of scheme-value?))  
+    (env environment?)) 
+  (recursively-extended-env-record
+    (proc-names (list-of symbol?))  
+    (idss (list-of (list-of symbol?)))
+    (bodies (list-of expresion?)) 
+    (env environment?))) 
+
+(define scheme-value? (lambda (v) #t))
+
+
+;empty-env:      -> enviroment
+;función que crea un ambiente vacío
+(define empty-env  
+  (lambda ()
+    (empty-env-record)))
+
+
+;extend-env: <list-of symbols> <list-of numbers> enviroment -> enviroment
+;función que crea un ambiente extendido
+(define extend-env
+  (lambda (syms vals env)
+    (extended-env-record syms vals env)))
+
+
+;extend-env-recursively: <list-of symbols> <list-of <list-of symbols>> <list-of expressions> environment -> environment
+;función que crea un ambiente extendido para procedimientos recursivos
+(define extend-env-recursively
+  (lambda (proc-names idss bodies old-env)
+    (recursively-extended-env-record
+     proc-names idss bodies old-env)))
+
+
+(define apply-env
+  (lambda (env sym)
+    (cases environment env)))
+
+
+
+(lista-exp (lexps)
+  (eval-lista lexps env))
+
+
+(ejes-exp (ejes-list)
+          (eval-ejes ejes-list env))
+
+(define eval-vector eval-lista)
+
+
+(define eval-lista
+  (lambda (lexps env)
+    (map (lambda (exp) (eval-expression exp env)) lexps)))
+
+
+(define eval-vertices
+  (lambda (vertices env)
+    vertices))
+
+
+(define eval-ejes
+  (lambda (ejes-list env)
+    (map (lambda (eje)
+           (let ((from (first eje))
+                 (to (second eje)))
+             (make-ejes (eval-expression from env)
+                        (eval-expression to env))))
+         ejes-list)))
+
+
+
