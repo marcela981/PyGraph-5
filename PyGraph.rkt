@@ -227,24 +227,24 @@
 ;; Tipos de datos para la sintaxis
 (sllgen:make-define-datatypes lexico gramatica)
 
-;;scan&parse: -> parser
+;; scan&parse: -> parser
 ;; Parser - Analizador sintáctico
 (define scan&parse
   (sllgen:make-string-parser lexico gramatica))
 
-;;show-the-datatypes: -> void
+;; show-the-datatypes: -> void
 ;; Función para mostrar los tipos de datos definidos
 (define show-the-datatypes
   (lambda () (sllgen:list-define-datatypes lexico gramatica)))
 
-;;just-scan: -> scanner
+;; just-scan: -> scanner
 ;; Scanner - Analizador léxico
 (define just-scan
   (sllgen:make-string-scanner lexico gramatica))
 
 
 
-;;Frontend + Evaluación + señal para lectura - Interpretador
+;; Frontend + Evaluación + señal para lectura - Interpretador
 (define interpretador
   (sllgen:make-rep-loop  "-> "
      (lambda (pgm) (eval-program  pgm)) 
@@ -254,8 +254,8 @@
        )
   )
 
-;eval-program: <programa> -> numero
-; función que evalúa un programa teniendo en cuenta un ambiente dado (se inicializa dentro del programa)
+;; eval-program: <programa> -> numero
+;; función que evalúa un programa teniendo en cuenta un ambiente dado (se inicializa dentro del programa)
 
 (define eval-program
   (lambda (pgm)
@@ -263,7 +263,7 @@
       (pyGraph-program (body)
                       (eval-expression body (init-env))))))
 
-; Ambiente inicial
+;; Ambiente inicial
 (define init-env
   (lambda ()
     (extend-env
@@ -341,34 +341,92 @@
 (define scheme-value? (lambda (v) #t))
 
 
-;empty-env:      -> enviroment
-;función que crea un ambiente vacío
+;; empty-env:      -> enviroment
+;; función que crea un ambiente vacío
 (define empty-env  
   (lambda ()
     (empty-env-record)))
 
 
-;extend-env: <list-of symbols> <list-of numbers> enviroment -> enviroment
-;función que crea un ambiente extendido
+;; extend-env: <list-of symbols> <list-of numbers> enviroment -> enviroment
+;; función que crea un ambiente extendido
 (define extend-env
   (lambda (syms vals env)
     (extended-env-record syms vals env)))
 
 
-;extend-env-recursively: <list-of symbols> <list-of <list-of symbols>> <list-of expressions> environment -> environment
-;función que crea un ambiente extendido para procedimientos recursivos
+;; extend-env-recursively: <list-of symbols> <list-of <list-of symbols>> <list-of expressions> environment -> environment
+;; función que crea un ambiente extendido para procedimientos recursivos
 (define extend-env-recursively
   (lambda (proc-names idss bodies old-env)
     (recursively-extended-env-record
      proc-names idss bodies old-env)))
 
 
+;; función que busca un símbolo en un ambiente
 (define apply-env
   (lambda (env sym)
-    (cases environment env)))
+    (cases environment env
+      (empty-env-record ()
+                        (eopl:error 'apply-env "No binding for ~s" sym))
+      (extended-env-record (syms vals env)
+                           (let ((pos (list-find-position sym syms)))
+                             (if (number? pos)
+                                 (list-ref vals pos)
+                                 (apply-env env sym))))
+      (recursively-extended-env-record (proc-names idss bodies old-env)
+                                       (let ((pos (list-find-position sym proc-names)))
+                                         (if (number? pos)
+                                             (make-closure (list-ref idss pos)
+                                                           (list-ref bodies pos)
+                                                           env)
+                                             (apply-env old-env sym))))
+      )
+    ))
 
 
+;; función para crear cierres a los procedimientos definidos
+(define make-closure
+  (lambda (params body env)
+    (list 'closure params body env)))
 
+
+;******************************Booleanos******************************
+
+(define eval-bool-exp
+  (lambda (expr-bool env)
+    (cases exp-bool expr-bool
+      (comparacion (pre-prim exp1 exp2)
+                   (eval-pred-prim pre-prim
+                                   (eval-expression exp1 env)
+                                   (eval-expression exp2 env)))
+      (conjuncion (op-bin-bool exp-bool1 exp-bool2)
+                  (eval-oper-bin-bool op-bin-bool
+                                      (eval-bool-exp exp-bool1 env)
+                                      (eval-bool-exp exp-bool2 env)))
+      (vlr-bool (valor)
+                (cases bool valor
+                  (true-exp () #t)
+                  (false-exp () #f)))
+      (op-comp (op-un-bool exp-bool1)
+               (eval-oper-un-bool op-un-bool (eval-bool-exp exp-bool1 env)))
+      )
+    ))
+
+
+;; Evaluar predicado boleano
+(define eval-pred-prim
+  (lambda (operator exp1 exp2)
+    (case operator
+      ((<) (< exp1 exp2))
+      ((>) (> exp1 exp2))
+      ((<=) (<= exp1 exp2))
+      ((>=) (>= exp1 exp2))
+      ((==) (equal? exp1 exp2))
+      ((<>) (not (equal? exp1 exp2))))))
+
+
+;; Auxiliares 
 (lista-exp (lexps)
   (eval-lista lexps env))
 
