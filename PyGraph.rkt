@@ -280,9 +280,9 @@
       (lista-exp (lexps) (eval-lista lexps env))
       (vector-exp (lexps) (eval-vector lexps env))
       (identificador-exp (id) (apply-env env id))
-      (primun-exp (op exp) (eval-unprim op (eval-expression exp env)))
+      (primun-exp (op exp) (eval-unariaprim op (eval-expression exp env)))
       (primbin-exp (op exp1 exp2)
-                   (eval-binprim op
+                   (eval-binariaprim op
                                  (eval-expression exp1 env)
                                  (eval-expression exp2 env)))
       (var-exp (ids rands body) (let ((args (eval-rands rands env)))
@@ -297,13 +297,15 @@
                   (eval-expression true-exp env)
                   (eval-expression false-exp env)))
       (proc-exp (ids body)
-                (closure ids body env))
+                (make-closure ids body env))
       (app-exp (rator rands)
                (let ((proc (eval-expression rator env))
                      (args (eval-rands rands env)))
-                 (if (procval? proc)
+                 (if (list? proc)
+                      (if (eq? (car proc) 'closure)
                      (apply-procedure proc args)
-                     (eopl:error 'eval-expression "Attempt to apply non-procedure ~s" proc))))
+                     (eopl:error 'eval-expression "Attempt to apply non-procedure ~s" proc))
+                    (eopl:error 'eval-expression "Attempt to apply non-procedure ~s" proc))))
       (begin-exp (exp lexps)
                  (if (null? lexps)
                      (eval-expression exp env)
@@ -324,6 +326,7 @@
       (else (eopl:error "Error! the variable ~s is not defined")))
     ))
 
+    
 ;; Representación de un ambiente
 ;; Se define un ambiente y dentro de ese se representa otro ambiente
 (define-datatype environment environment?
@@ -385,12 +388,6 @@
     ))
 
 
-;; función para crear cierres a los procedimientos definidos
-(define make-closure
-  (lambda (params body env)
-    (list 'closure params body env)))
-
-
 ;******************************Booleanos******************************
 
 (define eval-bool-exp
@@ -414,8 +411,8 @@
     ))
 
 
-; funciones auxiliares para aplicar eval-expression a cada elemento de una 
-; lista de operandos (expresiones)
+;; funciones auxiliares para aplicar eval-expression a cada elemento de una 
+;; lista de operandos (expresiones)
 (define eval-rands
   (lambda (rands env)
     (map (lambda (x) (eval-rand x env)) rands)))
@@ -462,24 +459,36 @@
 ;******************************Auxiliares ******************************
 
 
-(lista-exp (lexps)
-  (eval-lista lexps env))
+;; funciones auxiliares para encontrar la posición de un símbolo
+;; en la lista de símbolos de unambiente
+(define list-find-position
+  (lambda (sym los)
+    (list-index (lambda (sym1) (eqv? sym1 sym)) los)))
 
 
-(ejes-exp (ejes-list)
-          (eval-ejes ejes-list env))
+(define list-index
+  (lambda (pred ls)
+    (cond
+      ((null? ls) #f)
+      ((pred (car ls)) 0)
+      (else (let ((list-index-r (list-index pred (cdr ls))))
+              (if (number? list-index-r)
+                  (+ list-index-r 1)
+                  #f))))))
+
+
+;; Funcion para evaluar listas
+(define eval-lista
+  (lambda (l-exp env)
+    (cases lista l-exp
+      (empty-list () '())  ; Si la lista está vacía, retorna una lista vacía de Scheme.
+      (lista1 (lexps)
+        (map (lambda (exp) (eval-expression exp env)) lexps))  ; Evalúa cada expresión en la lista y retorna una lista de resultados.
+      )
+    ))
+
 
 (define eval-vector eval-lista)
-
-
-(define eval-lista
-  (lambda (lexps env)
-    (map (lambda (exp) (eval-expression exp env)) lexps)))
-
-
-(define eval-vertices
-  (lambda (vertices env)
-    vertices))
 
 
 (define eval-ejes
@@ -490,6 +499,97 @@
              (make-ejes (eval-expression from env)
                         (eval-expression to env))))
          ejes-list)))
+
+
+(define eval-vertices
+  (lambda (vertices env)
+    vertices))
+
+
+;; primitivas unarias
+(define eval-unariaprim
+  (lambda (op op1 env)
+    (cases prim-un op
+      (add1 () (+ op1 1))
+      (sub1 () (- op1 1))
+      (add1x8 () (suma-bignum op1 '(1) 8))
+      (sub1x8 () (resta-bignum op1 '(1) 8))
+      (add1x16 () (suma-bignum op1 '(1) 16))
+      (sub1x16 () (resta-bignum op1 '(1) 16))
+      (add1x32 () (suma-bignum op1 '(1) 32))
+      (sub1x32 () (resta-bignum op1 '(1) 32))
+      (lenght-exp () (length op1))
+      (lista?-exp () (list? op1))
+      (car-exp () (if (list? op1) (car op1) (eopl:error 'eval-unariaprim "car expects a list")))
+      (cdr-exp () (if (list? op1) (cdr op1) (eopl:error 'eval-unariaprim "cdr expects a list")))
+      (else (eopl:error 'eval-unariaprim "Unknown unary primitive operation" op))
+      )
+    )
+  )
+
+
+;; primitivas binarias
+(define eval-binariaprim
+  (lambda (op op1 op2 env)
+    (cases prim-bin op
+      (suma () (+ op1 op2))
+      (resta () (- op1 op2))
+      (mult () (* op1 op2))
+      (modulo-b () (if (= op2 0)
+                       (eopl:error 'eval-binariaprim "División por cero en módulo")
+                       (modulo op1 op2)))
+      (division () (if (= op2 0)
+                       (eopl:error 'eval-binariaprim "División por cero")
+                       (/ op1 op2)))
+      (concat-exp () (if (and (string? op1) (string? op2))
+                         (string-append op1 op2)
+                         (eopl:error 'evalbinariaprim "Los operandos deben ser cadenas para 'concat'")))
+      (append-exp () (if (and (list? op1) (list? op2))
+                         (append op1 op2)
+                         (eopl:error 'eval-binariaprim "Los operandos deben ser listas para 'append'")))
+      (crear-lista-exp () (cons op1 op2))  ; Asume que op1 es un elemento y op2 una lista
+      (menor-exp () (< op1 op2))
+      (mayor-exp () (> op1 op2))
+      (menor=exp () (<= op1 op2))
+      (mayor=exp () (>= op1 op2))
+      (igual=exp () (equal? op1 op2))
+      (diferente-exp () (not (equal? op1 op2)))
+      (and-exp () (and op1 op2))
+      (or-exp () (or op1 op2))
+      (else (eopl:error 'eval-binariaprim "Operación binaria desconocida" op))
+      )
+    )
+  )
+
+
+;; función para crear cierres a los procedimientos definidos
+(define make-closure
+  (lambda (params body env)
+    (list 'closure params body env))) ; crea una lista que representa una clausura
+
+
+(define apply-procedure
+  (lambda (proc args)
+    (if (and (list? proc) (eq? (car proc) 'closure))
+        (let ((ids (cadr proc))
+              (body (caddr proc))
+              (env (cadddr proc)))
+          (eval-expression body (extend-env ids args env)))
+        (eopl:error 'apply-procedure "Attempt to apply non-procedure ~s" proc))))
+
+
+;;(ejes-exp (ejes-list)
+;;          (eval-ejes ejes-list env))
+
+
+;;(lista-exp (lexps)
+;;  (eval-lista lexps env))
+
+
+
+
+
+
 
 
 
