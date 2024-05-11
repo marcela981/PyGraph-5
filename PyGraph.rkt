@@ -309,21 +309,35 @@
       (begin-exp (exp lexps)
                  (if (null? lexps)
                      (eval-expression exp env)
-                     (letrec [(recorrer (lambda (L)
-                                          (cond [(null? (cdr L)) (eval-expression (car L) env)]
-                                                [else (begin (eval-expression (car L) env)
-                                                            (recorrer (cdr L)))]))
-                       (begin (eval-expression exp env)
-                              (recorrer lexps)))])))
-(grafo-exp (grafo)
-                 (let ((vertices (grafo-vertices grafo))
-                       (ejes (grafo-ejes grafo)))
-                   (make-grafo (eval-vertices vertices env) (eval-ejes ejes env))))
+                     (letrec
+                         [(recorrer (lambda (L)
+                                      (cond
+                                        [(null? (cdr L)) (eval-expression (car L) env)]
+                                        [else (begin (eval-expression (car L) env)
+                                                     (recorrer (cdr L))
+                                                     )]
+                                        )
+                                      ))
+                          ]
+                       (begin
+                         (eval-expression exp env)
+                         (recorrer lexps))
+                       )
+                     )
+                 )
+(grafito-exp (vertices ejecito)
+                   (create-grafito (eval-vertices vertices env)
+                                   (eval-ejecitos ejecitos env)))
+      
       (vertices-exp (label)
                   (make-vertices label))
-     (ejes-exp (ejes-list)
-                (eval-ejes ejes-list env))
+      
+     (ejes-exp (from to)
+               (make-ejes (eval-expression from env)
+                (eval-ejes ejes-list env)))
+      
       (else (eopl:error "Error! the variable ~s is not defined")))
+    
     ))
 
     
@@ -342,6 +356,31 @@
     (env environment?))) 
 
 (define scheme-value? (lambda (v) #t))
+
+(define-datatype grafito-datatype grafito?
+  (grafito-constructor (vertices list) (edges list)))
+
+(define (create-grafito vertices ejecitos)
+  (list 'grafito vertices ejecitos))
+
+(define (create-vertices labels)
+  (list 'vertices labels))
+
+(define (create-ejecitos from to)
+  (list 'ejecitos from to))
+
+(define eval-ejecitos
+  (lambda (ejecitos-list env)
+    (map (lambda (eje)
+           (let ((from (first eje))
+                 (to (second eje)))
+             (create-ejecitos (eval-expression from env)
+                          (eval-expression to env))))
+         ejecitos-list)))
+
+(define eval-vertices
+  (lambda (vertices env)
+    vertices))
 
 
 ;; empty-env:      -> enviroment
@@ -488,8 +527,14 @@
     ))
 
 
-(define eval-vector eval-lista)
+(define (make-grafo vertices ejes)
+  (list 'grafo vertices ejes))
 
+(define (make-vertices label)
+  (list 'vertices label))
+
+(define (make-ejes from to)
+  (list 'ejes from to))
 
 (define eval-ejes
   (lambda (ejes-list env)
@@ -499,11 +544,6 @@
              (make-ejes (eval-expression from env)
                         (eval-expression to env))))
          ejes-list)))
-
-
-(define eval-vertices
-  (lambda (vertices env)
-    vertices))
 
 
 ;; primitivas unarias
@@ -576,6 +616,21 @@
               (env (cadddr proc)))
           (eval-expression body (extend-env ids args env)))
         (eopl:error 'apply-procedure "Attempt to apply non-procedure ~s" proc))))
+
+
+(define (is-grafito? x)
+  (eq? (car x) 'grafito))
+
+(define (get-grafito-vertices g)
+  (if (is-grafito? g)
+      (cadr g)
+      (error "Invalid grafito object: No vertices")))
+
+(define (get-grafito-ejecitos g)
+  (if (is-grafito? g)
+      (caddr g)
+      (error "Invalid grafito object: No ejecitos")))
+
 
 
 ;;(ejes-exp (ejes-list)
