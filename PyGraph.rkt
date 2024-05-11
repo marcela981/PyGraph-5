@@ -414,6 +414,16 @@
     ))
 
 
+; funciones auxiliares para aplicar eval-expression a cada elemento de una 
+; lista de operandos (expresiones)
+(define eval-rands
+  (lambda (rands env)
+    (map (lambda (x) (eval-rand x env)) rands)))
+
+(define eval-rand
+  (lambda (rand env)
+    (eval-expression rand env)))
+
 ;; Evaluar predicado boleano
 (define eval-pred-prim
   (lambda (operator exp1 exp2)
@@ -426,7 +436,32 @@
       ((<>) (not (equal? exp1 exp2))))))
 
 
-;; Auxiliares 
+;; Evaluar operaciones binarias booleanas
+(define eval-oper-bin-bool
+  (lambda (op op1 op2)
+    (cases oper-bin-bool op
+      (and-exp () (and op1 op2))
+      (or-exp () (or op1 op2))
+      )
+    "Evalúa operaciones binarias booleanas basadas en el operador específico (op), aplicando los valores booleanos op1 y op2."
+    )
+  )
+
+
+;; Evaluar operaciones unarias booleanas
+(define eval-oper-un-bool
+  (lambda (op op1)
+    (cases oper-un-bool op
+      (not-exp () (not op1))
+      )
+    "Evalúa operaciones unarias booleanas basadas en el operador específico (op), aplicando el valor booleano op1."
+    )
+  )
+
+
+;******************************Auxiliares ******************************
+
+
 (lista-exp (lexps)
   (eval-lista lexps env))
 
