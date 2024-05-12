@@ -296,32 +296,32 @@
 
 (define eval-expression
   (lambda (exp env)
-    (cases expresion exp
-      (numero-lit (num) num)
-      (caracter-exp (caracter) caracter)
-      (cadena-exp (cadena) cadena)
-      (lista-exp (lexps) (eval-lista lexps env))
-      (vector-exp (lexps) (eval-vector lexps env))
-      (identificador-exp (id) (apply-env env id))
-      (primun-exp (op exp) (eval-unariaprim op (eval-expression exp env)))
-      (primbin-exp (op exp1 exp2)
+    (cases expresion-xp exp
+      (numeroxd (num) num)
+      (caracterxd (caracter) caracter)
+      (cadenaxd  (cadena) cadena)
+      (listaxd-exp (lexps) (eval-lista lexps env))
+      (vectorxd-exp (lexps) (eval-vector lexps env))
+      (identificadorxd-exp (id) (apply-env env id))
+      (primunxd-exp (op exp) (eval-unariaprim op (eval-expression exp env)))
+      (primbinxd-exp (op exp1 exp2)
                    (eval-binariaprim op
                                  (eval-expression exp1 env)
                                  (eval-expression exp2 env)))
-      (var-exp (ids rands body) (let ((args (eval-rands rands env)))
+      (varxd-exp (ids rands body) (let ((args (eval-rands rands env)))
                  (eval-expression body (extend-env ids args env))))
-      (rec-exp (proc-names idss bodies letrec-body)
+      (recxd-exp (proc-names idss bodies letrec-body)
                (eval-expression letrec-body
                                 (extend-env-recursively proc-names idss bodies env)))
-      (bool-expr (expr-bool)
+      (boolxd-exp (expr-bool)
                 (eval-bool-exp expr-bool env))
-      (if-exp (exp-bool true-exp false-exp)
+      (ifxd-exp (exp-bool true-exp false-exp)
               (if (eval-bool-exp exp-bool env)
                   (eval-expression true-exp env)
                   (eval-expression false-exp env)))
-      (proc-exp (ids body)
+      (procxd-exp (ids body)
                 (make-closure ids body env))
-      (app-exp (rator rands)
+      (appxd-exp (rator rands)
                (let ((proc (eval-expression rator env))
                      (args (eval-rands rands env)))
                  (if (list? proc)
@@ -329,7 +329,7 @@
                      (apply-procedure proc args)
                      (eopl:error 'eval-expression "Attempt to apply non-procedure ~s" proc))
                     (eopl:error 'eval-expression "Attempt to apply non-procedure ~s" proc))))
-      (begin-exp (exp lexps)
+      (beginxd-exp (exp lexps)
                  (if (null? lexps)
                      (eval-expression exp env)
                      (letrec
@@ -348,14 +348,14 @@
                        )
                      )
                  )
-(grafo-exp (vertices ejecito)
+(grafoxd (vertices ejecito)
                    (create-grafito (eval-vertices vertices env)
                                    (eval-ejecitos ejecitos env)))
       
-      (vertices-exp (label)
+      (verticesxd-exp (label)
                   (make-vertices label))
       
-     (ejes-exp (from to)
+     (ejesxd-exp (from to)
                (make-ejes (eval-expression from env)
                 (eval-ejes ejes-list env)))
       
@@ -380,31 +380,6 @@
 
 (define scheme-value? (lambda (v) #t))
 
-
-(define-datatype grafito-datatype grafito?
-  (grafito-constructor (vertices list) (edges list)))
-
-(define (create-grafito vertices ejecitos)
-  (list 'grafito vertices ejecitos))
-
-(define (create-vertices labels)
-  (list 'vertices labels))
-
-(define (create-ejecitos from to)
-  (list 'ejecitos from to))
-
-(define eval-ejecitos
-  (lambda (ejecitos-list env)
-    (map (lambda (eje)
-           (let ((from (first eje))
-                 (to (second eje)))
-             (create-ejecitos (eval-expression from env)
-                          (eval-expression to env))))
-         ejecitos-list)))
-
-(define eval-vertices
-  (lambda (vertices env)
-    vertices))
 
 
 ;; empty-env:      -> enviroment
@@ -551,24 +526,6 @@
     ))
 
 
-(define (make-grafo vertices ejes)
-  (list 'grafo vertices ejes))
-
-(define (make-vertices label)
-  (list 'vertices label))
-
-(define (make-ejes from to)
-  (list 'ejes from to))
-
-(define eval-ejes
-  (lambda (ejes-list env)
-    (map (lambda (eje)
-           (let ((from (first eje))
-                 (to (second eje)))
-             (make-ejes (eval-expression from env)
-                        (eval-expression to env))))
-         ejes-list)))
-
 
 ;; primitivas unarias
 (define eval-unariaprim
@@ -625,11 +582,14 @@
     )
   )
 
-
-;; función para crear cierres a los procedimientos definidos
-(define make-closure
-  (lambda (params body env)
-    (list 'closure params body env))) ; crea una lista que representa una clausura
+; clousure
+(define-datatype procval procval?
+  (closure
+   (ids (list-of symbol?))
+   (body expresion?)
+   (env environment?)
+   )
+  )
 
 
 (define apply-procedure
@@ -642,25 +602,41 @@
         (eopl:error 'apply-procedure "Attempt to apply non-procedure ~s" proc))))
 
 
-(define (is-grafito? x)
-  (eq? (car x) 'grafito))
-
-(define (get-grafito-vertices g)
-  (if (is-grafito? g)
-      (cadr g)
-      (error "Invalid grafito object: No vertices")))
-
-(define (get-grafito-ejecitos g)
-  (if (is-grafito? g)
-      (caddr g)
-      (error "Invalid grafito object: No ejecitos")))
+(define eval-vector
+  (lambda (v-exp env)
+    (cases vector v-exp
+      (empty-vector () '())  ; Si el vector está vacío, retorna un vector vacío de Scheme.
+      (vector1 (vexps)
+        (vector-map (lambda (exp) (eval-expression exp env)) vexps))  ; Evalúa cada expresión en el vector y retorna un vector de resultados.
+      )
+    ))
 
 
+(define eval-vertices
+  (lambda (vertices-list env)
+    (map (lambda (vertex) (eval-expression vertex env)) vertices-list)
+    ))
 
 
+(define eval-ejecitos
+  (lambda (edges-list env)
+    (map (lambda (edge) (eval-expression edge env)) edges-list)
+    ))
 
 
+(define create-grafito
+  (lambda (vertices-list edges-list)
+    (graph-exp (vertices-exp vertices-list) (edges-exp edges-list))
+    ))
 
 
+(define make-vertices
+  (lambda (label-list)
+    (vertices-exp label-list)
+    ))
 
 
+(define make-ejes
+  (lambda (from to)
+    (edges-exp (list (edge-exp from to)))
+    ))
