@@ -272,11 +272,34 @@
      (empty-env))))
 
 
+(define-datatype expresion-xp expresion-xp?
+  (numeroxd (num number?))
+  (caracterxd (caracter string?))
+  (cadenaxd (cadena string?))
+  (listaxd-exp (lexps list))
+  (vectorxd-exp (vexps list))
+  (identificadorxd-exp (id symbol?))
+  (primunxd-exp (op symbol?) (exp expresion-xp?))
+  (primbinxd-exp (op symbol?) (exp1 expresion-xp?) (exp2 expresion-xp?))
+  (varxd-exp (ids list?) (rands list?) (body expresion-xp?))
+  (recxd-exp (proc-names list?) (idss list?) (bodies list?) (letrec-body expresion-xp?))
+  (boolxd-exp (expr-bool expresion-xp?))
+  (ifxd-exp (exp-bool expresion-xp?) (true-exp expresion-xp?) (false-exp expresion-xp?))
+  (procxd-exp (ids list?) (body expresion-xp?))
+  (appxd-exp (rator expresion-xp?) (rands list?))
+  (beginxd-exp (exp expresion-xp?) (lexps list?))
+  (grafoxd (vertices list) (ejecitos list))
+  (verticesxd-exp (label list))
+  (ejesxd-exp (from expresion-xp?) (to expresion-xp?))
+)
+
+
 (define eval-expression
   (lambda (exp env)
     (cases expresion exp
-      (numero-lit (datum) datum)
-      (cadena-exp (string) string)
+      (numero-lit (num) num)
+      (caracter-exp (caracter) caracter)
+      (cadena-exp (cadena) cadena)
       (lista-exp (lexps) (eval-lista lexps env))
       (vector-exp (lexps) (eval-vector lexps env))
       (identificador-exp (id) (apply-env env id))
@@ -325,7 +348,7 @@
                        )
                      )
                  )
-(grafito-exp (vertices ejecito)
+(grafo-exp (vertices ejecito)
                    (create-grafito (eval-vertices vertices env)
                                    (eval-ejecitos ejecitos env)))
       
@@ -356,6 +379,7 @@
     (env environment?))) 
 
 (define scheme-value? (lambda (v) #t))
+
 
 (define-datatype grafito-datatype grafito?
   (grafito-constructor (vertices list) (edges list)))
@@ -631,14 +655,6 @@
       (caddr g)
       (error "Invalid grafito object: No ejecitos")))
 
-
-
-;;(ejes-exp (ejes-list)
-;;          (eval-ejes ejes-list env))
-
-
-;;(lista-exp (lexps)
-;;  (eval-lista lexps env))
 
 
 
