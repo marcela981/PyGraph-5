@@ -16,8 +16,8 @@
                  caracter-exp (caracter)
             ::= "<cadena>"
                  cadena-exp (cadena)
-            ::= <expr-bool>
-                bool-expr (expr-bool)
+            ::= <exp-bool>
+                bool-exp (exp-bool)
             ::= <identificador>
                 identificador-exp (id)          
             ::= var {<identificador> = <expresion>}*(,) in <expresion>
@@ -357,7 +357,7 @@
       
      (ejesxd-exp (from to)
                (make-ejes (eval-expression from env)
-                (eval-ejes ejes-list env)))
+                (eval-ejecitos ejecitos env)))
       
       (else (eopl:error "Error! the variable ~s is not defined")))
     
@@ -429,8 +429,8 @@
 ;******************************Booleanos******************************
 
 (define eval-bool-exp
-  (lambda (expr-bool env)
-    (cases exp-bool expr-bool
+  (lambda (exp-bool env)
+    (cases expr-bool exp-bool
       (comparacion (pre-prim exp1 exp2)
                    (eval-pred-prim pre-prim
                                    (eval-expression exp1 env)
@@ -493,8 +493,82 @@
     )
   )
 
+;***************************** Bignum ******************************
 
-;******************************Auxiliares ******************************
+(define zero
+  (lambda()
+    '()
+  )
+)
+
+
+(define is-zero?
+  (lambda(n)
+    (null? n)
+  )
+)
+
+(define base 16)
+
+(define predecesor
+  (lambda (n)
+    (cond
+      ((is-zero? n) (eopl:error "No hay un predecesor para cero"))
+      ((>= (car n) base) (eopl:error "Debe ser menor que 16"))
+      ((equal? n '(1)) '())
+      ((zero? (car n))
+      (if (null? (cdr n))
+        (eopl:error "No hay un predecesor para cero")
+        (cons (- base 1) (predecesor (cdr n)))
+        ))
+      (else (cons (- (car n) 1) (cdr n)))
+    )
+  )
+)
+
+(define sucesor
+  (lambda (n)
+    (if (is-zero? n)
+      '(1)
+      (let ((t (+ (car n) 1)))
+        (if (= t base)
+          (cons 0 (sucesor (cdr n)))
+          (cons t (cdr n))
+        )
+      )
+    )
+  )
+)
+
+(define sum-bignum
+  (lambda (x y)
+    (if (is-zero? x)
+      y
+      (sucesor (sum-bignum (predecesor x) y))
+    )
+  )
+)
+
+(define res-bignum
+  (lambda (x y)
+    (if (is-zero? y)
+      x
+      (predecesor (res-bignum x (predecesor y)))
+    )
+  )
+)
+
+(define mult-bignum
+  (lambda (x y)
+    (if (is-zero? y)
+      x
+      (predecesor (res-bignum x (predecesor y)))
+    )
+  )
+)
+
+
+;***************************** Auxiliares ******************************
 
 
 ;; funciones auxiliares para encontrar la posición de un símbolo
@@ -530,15 +604,15 @@
 ;; primitivas unarias
 (define eval-unariaprim
   (lambda (op op1 env)
-    (cases prim-un op
+    (cases primitiva-unaria op
       (add1 () (+ op1 1))
       (sub1 () (- op1 1))
-      (add1x8 () (suma-bignum op1 '(1) 8))
-      (sub1x8 () (resta-bignum op1 '(1) 8))
-      (add1x16 () (suma-bignum op1 '(1) 16))
-      (sub1x16 () (resta-bignum op1 '(1) 16))
-      (add1x32 () (suma-bignum op1 '(1) 32))
-      (sub1x32 () (resta-bignum op1 '(1) 32))
+      (add1x8 () (sum-bignum op1 '(1) 8))
+      (sub1x8 () (res-bignum op1 '(1) 8))
+      (add1x16 () (sum-bignum op1 '(1) 16))
+      (sub1x16 () (res-bignum op1 '(1) 16))
+      (add1x32 () (sum-bignum op1 '(1) 32))
+      (sub1x32 () (res-bignum op1 '(1) 32))
       (lenght-exp () (length op1))
       (lista?-exp () (list? op1))
       (car-exp () (if (list? op1) (car op1) (eopl:error 'eval-unariaprim "car expects a list")))
@@ -552,7 +626,7 @@
 ;; primitivas binarias
 (define eval-binariaprim
   (lambda (op op1 op2 env)
-    (cases prim-bin op
+    (cases primitiva-binaria op
       (suma () (+ op1 op2))
       (resta () (- op1 op2))
       (mult () (* op1 op2))
@@ -569,18 +643,25 @@
                          (append op1 op2)
                          (eopl:error 'eval-binariaprim "Los operandos deben ser listas para 'append'")))
       (crear-lista-exp () (cons op1 op2))  ; Asume que op1 es un elemento y op2 una lista
+      (else (eopl:error 'eval-binariaprim "Operación binaria desconocida" op))
+      )
+    )
+  )
+
+;; predicado primario
+
+(define eval-predprim
+  (lambda (op op1 op2 env)
+    (cases pred-prim op
       (menor-exp () (< op1 op2))
       (mayor-exp () (> op1 op2))
       (menor=exp () (<= op1 op2))
       (mayor=exp () (>= op1 op2))
       (igual=exp () (equal? op1 op2))
       (diferente-exp () (not (equal? op1 op2)))
-      (and-exp () (and op1 op2))
-      (or-exp () (or op1 op2))
-      (else (eopl:error 'eval-binariaprim "Operación binaria desconocida" op))
-      )
-    )
-  )
+    )))
+
+
 
 ; clousure
 (define-datatype procval procval?
@@ -605,11 +686,11 @@
 (define eval-vector
   (lambda (v-exp env)
     (cases vector v-exp
-      (empty-vector () '())  ; Si el vector está vacío, retorna un vector vacío de Scheme.
+      ;(empty-vector () '())  ; Si el vector está vacío, retorna un vector vacío de Scheme.
       (vector1 (vexps)
-        (vector-map (lambda (exp) (eval-expression exp env)) vexps))  ; Evalúa cada expresión en el vector y retorna un vector de resultados.
-      )
-    ))
+        (map (lambda (exp) (eval-expression exp env)) vexps)))  ; Evalúa cada expresión en el vector y retorna un vector de resultados.
+  )
+)
 
 
 (define eval-vertices
@@ -617,16 +698,17 @@
     (map (lambda (vertex) (eval-expression vertex env)) vertices-list)
     ))
 
+(define ejecitos '())
 
 (define eval-ejecitos
-  (lambda (edges-list env)
-    (map (lambda (edge) (eval-expression edge env)) edges-list)
+  (lambda (ejecitos env)
+    (map (lambda (edge) (eval-expression edge env)) ejecitos)
     ))
 
 
 (define create-grafito
-  (lambda (vertices-list edges-list)
-    (graph-exp (vertices-exp vertices-list) (edges-exp edges-list))
+  (lambda (vertices-list ejecitos)
+    (graph-exp (vertices-exp vertices-list) (edges-exp ejecitos))
     ))
 
 
