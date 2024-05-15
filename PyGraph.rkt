@@ -705,6 +705,8 @@
     (map (lambda (edge) (eval-expression edge env)) ejecitos)
     ))
 
+;***************************** Constructores grafos ******************************
+
 
 (define create-grafito
   (lambda (vertices-list ejecitos)
@@ -720,5 +722,117 @@
 
 (define make-ejes
   (lambda (from to)
-    (edges-exp (list (edge-exp from to)))
-    ))
+    (edges-exp (list (edges-exp from to)))
+  )
+)
+
+(define graph-exp
+  (lambda (vertices edges)
+    (grafoxd vertices edges)
+  )
+)
+
+(define edges-exp
+  (lambda (from to)
+    (ejesxd-exp from to)
+  )
+)
+
+(define graph
+  (lambda (l)
+    (ejesxd-exp l)
+  )
+)
+
+
+;***************************** Predicados grafos ******************************
+
+
+(define graph?
+  (lambda (exp)
+    (cases expresion-xp exp
+      (grafoxd (vertices edges)
+                (and (vertices? vertices) (edges? edges)))
+                (else #f)
+      )))
+
+(define edges?
+  (lambda (exp)
+    (cases expresion-xp exp
+      (ejesxd-exp (from to)
+                  (and (list? from) (list? to)))
+                  (else #f))))
+
+
+;***************************** Extractores grafos ******************************
+
+(define graph->vertices
+  (lambda (exp)
+    (cases expresion-xp exp
+      (grafoxd (vertices edges)
+                vertices)
+                (else (eopl:error "No es un grafo"))
+    )
+  )
+)
+
+(define vertices->list
+  (lambda (exp)
+    (cases expresion-xp exp
+      (verticesxd-exp(label)
+                      label)
+      (else (eopl:error "No es una lista de vertices"))
+    )
+  )
+)
+
+(define edges->list
+  (lambda (exp)
+    (cases expresion-xp exp
+      (ejesxd-exp (from to)
+                  to)
+                  (else (eopl:error "No es una lista de edges")))))
+
+
+
+
+#| 
+
+  ;***************************** Funciones grafos no dirigidos ******************************
+(define member-aux
+  (lambda (x lst)
+    (cond
+      ((null? lst) #f)
+      ((equal? x (car lst)) #t)
+      (else (member-aux x (cdr lst))))))
+
+(define reverse-edge
+  (lambda (edge)
+    (cons (cdr edge) (car edge))))
+
+
+
+(define add-edge
+  (lambda (graph edge)
+    (cases expresion-xp graph
+      ((grafoxd (vertices edges))
+       (let ((edges-list (edges->list edges)))
+         (if (or (member-aux edge edges-list)
+                 (member-aux (reverse-edge edge) edges-list))
+             (eopl:error "The given edge already exists in the graph")
+             (graph (vertices) (edges (append edges (list edge))))))))))
+
+
+
+(define vecinos
+  (lambda (graph node)
+    (let ((edges-list (edges->list graph)))
+      (letrec ((find-neighbors
+                (lambda (edges)
+                  (cond
+                    ((null? edges) '())
+                    ((equal? (car (car edges)) node) (cons (cdr (car edges)) (find-neighbors (cdr edges))))
+                    ((equal? (cdr (car edges)) node) (cons (car (car edges)) (find-neighbors (cdr edges))))
+                    (else (find-neighbors (cdr edges)))))))
+        (find-neighbors edges-list))))) |#
+ 
