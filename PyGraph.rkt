@@ -928,3 +928,40 @@
       (ejesxd-exp (from to)
                   (cdr (cons from to)))
       (else (eopl:error "Not a valid list of vertices or edges")))))
+
+
+(interpretador)
+
+;***************************** Pruebas ******************************
+
+(scan&parse "1") ;  numero-lit - 1
+(scan&parse "'a'") ; caracter-exp - 'a'
+(scan&parse "\"abc\"") ; cadena-exp - "abc"
+(scan&parse "true") ; bool-exp - true
+(scan&parse "{ lista 1; 2; 3 }") ; list-exp - (1 2 3)
+(scan&parse "{ vector 1; 2; 3 }") ; vector-exp #(1 2 3)
+(scan&parse "{ registro @x = 1; @y = 2 }") ; registro-exp - { x: 1, y: 2 }
+(scan&parse "if true then 1 else 2 end")  ; if-exp - 1
+(scan&parse "begin 1; 2; 3 end") ; begin-exp - 3
+(scan&parse "while false do 1 done") ; while-exp - No debería hacer nada
+(scan&parse "for @i = 0 to 3 do @i + 1 done") ; for-exp - 4
+(scan&parse "1 + 2") ; primitiva-binaria + 3
+(scan&parse "3 - 2") ; primitiva-binaria - 1
+(scan&parse "4 * 2") ; primitiva-binaria * 8
+(scan&parse "6 / 2") ; primitiva-binaria / 3
+(scan&parse "5 % 2") ; primitiva-binaria % 1
+(scan&parse "car({ lista 1; 2; 3 })") ; car-exp 1
+(scan&parse "cdr({ lista 1; 2; 3 })") ; cdr-exp (2 3)
+(scan&parse "append({ lista 1; 2 }, { lista 3; 4 })") ; append-exp (1 2 3 4)
+(scan&parse "list?({ lista 1; 2; 3 })") ;  lista?-exp  true
+(scan&parse "var @a = 1, @b = 2 in @a + @b") ; Debería evaluar a 3
+(scan&parse "const @c = 10, @d = 20 in @c + @d") ; Debería evaluar a 30
+(scan&parse "rec @fact(n) = if n == 0 then 1 else n * @fact(n - 1) end in @fact(5)") ; Debería evaluar a 120
+(scan&parse "var @v = (vertices (a, b, c, d)) in var @e = (edges ((a, b), (c, d), (c, b), (a, c))) in var @g = (graph @v @e) in @g.vertices"); Debería evaluar a (vertices (a, b, c, d))
+(scan&parse "var @v = (vertices (a, b, c, d)) in var @e = (edges ((a, b), (c, d), (c, b), (a, c))) in var @g = (graph @v @e) in @g.edges"); Debería evaluar a (edges ((a, b), (c, d), (c, b), (a, c)))
+(scan&parse "var @g = (graph (vertices (a, b, c, d)) (edges ((a, b), (c, d), (c, b), (a, c)))) in @g.addEdge((a, f)).vecinos(a).first()"); Debería evaluar a b o (vertex b)
+(scan&parse "var @g = (graph (vertices (a, b, c, d)) (edges ((a, b), (c, d), (c, b), (a, c)))) in @g.edges.first()"); Debería evaluar a (a b)
+(scan&parse "var @g = (graph (vertices (a, b, c, d)) (edges ((a, b), (c, d), (c, b), (a, c)))) in @g.addEdge((a, f)).edges"); Debería evaluar a (edges ((a, b), (c, d), (c, b), (a, c), (a, f)))
+(scan&parse "var @g = (graph (vertices (a, b, c, d)) (edges ((a, b), (c, d), (c, b), (a, c)))) in @g.addEdge((a, f)).vecinos(a).first()"); Debería evaluar a b o (vertex b)
+(scan&parse "var @x = (graph (vertices (a, b, c, d)) (edges ((a, b), (c, d), (c, b), (a, c)))) in @x.addEdge((a, f)).edges"); Debería evaluar a (edges ((a, b), (c, d), (c, b), (a, c), (a, f)))
+
