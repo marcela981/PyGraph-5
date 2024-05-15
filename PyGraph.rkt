@@ -593,7 +593,7 @@
 (define eval-lista
   (lambda (l-exp env)
     (cases lista l-exp
-      (empty-list () '())  ; Si la lista está vacía, retorna una lista vacía de Scheme.
+      (empty-list () '()) 
       (lista1 (lexps)
         (map (lambda (exp) (eval-expression exp env)) lexps))  ; Evalúa cada expresión en la lista y retorna una lista de resultados.
       )
@@ -686,7 +686,7 @@
 (define eval-vector
   (lambda (v-exp env)
     (cases vector v-exp
-      ;(empty-vector () '())  ; Si el vector está vacío, retorna un vector vacío de Scheme.
+      ;(empty-vector () '())
       (vector1 (vexps)
         (map (lambda (exp) (eval-expression exp env)) vexps)))  ; Evalúa cada expresión en el vector y retorna un vector de resultados.
   )
@@ -795,7 +795,7 @@
 
 
 
-#| 
+
 
   ;***************************** Funciones grafos no dirigidos ******************************
 (define member-aux
@@ -814,24 +814,117 @@
 (define add-edge
   (lambda (graph edge)
     (cases expresion-xp graph
-      ((grafoxd (vertices edges))
-       (let ((edges-list (edges->list edges)))
-         (if (or (member-aux edge edges-list)
-                 (member-aux (reverse-edge edge) edges-list))
-             (eopl:error "The given edge already exists in the graph")
-             (graph (vertices) (edges (append edges (list edge))))))))))
+      (grafoxd (vertices edges)
+        (let ((edges-list (edges->list edges)))
+          (if (or (member-aux edge edges-list)
+                  (member-aux (reverse-edge edge) edges-list))
+              (eopl:error 'add-edge "The given edge already exists in the graph")
+              (grafoxd vertices (append edges (list edge))))))
+      (numeroxd (num)
+        (eopl:error 'add-edge "Expected a graph, but got a number"))
+      (caracterxd (char)
+        (eopl:error 'add-edge "Expected a graph, but got a character"))
+      (cadenaxd (str)
+        (eopl:error 'add-edge "Expected a graph, but got a string"))
+      (listaxd-exp (lst)
+        (eopl:error 'add-edge "Expected a graph, but got a list"))
+      (vectorxd-exp (vec)
+        (eopl:error 'add-edge "Expected a graph, but got a vector"))
+      (identificadorxd-exp (id)
+        (eopl:error 'add-edge "Expected a graph, but got an identifier"))
+      (primunxd-exp (op exp)
+        (eopl:error 'add-edge "Expected a graph, but got a unary primitive expression"))
+      (primbinxd-exp (op exp1 exp2)
+        (eopl:error 'add-edge "Expected a graph, but got a binary primitive expression"))
+      (varxd-exp (ids rands body)
+        (eopl:error 'add-edge "Expected a graph, but got a var expression"))
+      (recxd-exp (proc-names idss bodies letrec-body)
+        (eopl:error 'add-edge "Expected a graph, but got a recursive expression"))
+      (boolxd-exp (expr-bool)
+        (eopl:error 'add-edge "Expected a graph, but got a boolean expression"))
+      (ifxd-exp (exp-bool true-exp false-exp)
+        (eopl:error 'add-edge "Expected a graph, but got an if expression"))
+      (procxd-exp (ids body)
+        (eopl:error 'add-edge "Expected a graph, but got a procedure expression"))
+      (appxd-exp (rator rands)
+        (eopl:error 'add-edge "Expected a graph, but got an application expression"))
+      (beginxd-exp (exp lexps)
+        (eopl:error 'add-edge "Expected a graph, but got a begin expression"))
+      (verticesxd-exp (label)
+        (eopl:error 'add-edge "Expected a graph, but got a vertices expression"))
+      (ejesxd-exp (from to)
+        (eopl:error 'add-edge "Expected a graph, but got an edges expression"))
+      (else
+        (eopl:error 'add-edge "Unexpected expression type")))))
 
 
 
 (define vecinos
   (lambda (graph node)
-    (let ((edges-list (edges->list graph)))
-      (letrec ((find-neighbors
-                (lambda (edges)
-                  (cond
-                    ((null? edges) '())
-                    ((equal? (car (car edges)) node) (cons (cdr (car edges)) (find-neighbors (cdr edges))))
-                    ((equal? (cdr (car edges)) node) (cons (car (car edges)) (find-neighbors (cdr edges))))
-                    (else (find-neighbors (cdr edges)))))))
-        (find-neighbors edges-list))))) |#
- 
+    (cases expresion-xp graph
+      (grafoxd (vertices edges)
+        (letrec ((find-neighbors
+                  (lambda (edges)
+                    (cond
+                      ((null? edges) '())
+                      ((equal? (car (car edges)) node) (cons (cdr (car edges)) (find-neighbors (cdr edges))))
+                      ((equal? (cdr (car edges)) node) (cons (car (car edges)) (find-neighbors (cdr edges))))
+                      (else (find-neighbors (cdr edges)))))))
+          (find-neighbors edges)))
+      (numeroxd (num)
+        (eopl:error 'vecinos "Expected a graph, but got a number"))
+      (caracterxd (char)
+        (eopl:error 'vecinos "Expected a graph, but got a character"))
+      (cadenaxd (str)
+        (eopl:error 'vecinos "Expected a graph, but got a string"))
+      (listaxd-exp (lst)
+        (eopl:error 'vecinos "Expected a graph, but got a list"))
+      (vectorxd-exp (vec)
+        (eopl:error 'vecinos "Expected a graph, but got a vector"))
+      (identificadorxd-exp (id)
+        (eopl:error 'vecinos "Expected a graph, but got an identifier"))
+      (primunxd-exp (op exp)
+        (eopl:error 'vecinos "Expected a graph, but got a unary primitive expression"))
+      (primbinxd-exp (op exp1 exp2)
+        (eopl:error 'vecinos "Expected a graph, but got a binary primitive expression"))
+      (varxd-exp (ids rands body)
+        (eopl:error 'vecinos "Expected a graph, but got a var expression"))
+      (recxd-exp (proc-names idss bodies letrec-body)
+        (eopl:error 'vecinos "Expected a graph, but got a recursive expression"))
+      (boolxd-exp (expr-bool)
+        (eopl:error 'vecinos "Expected a graph, but got a boolean expression"))
+      (ifxd-exp (exp-bool true-exp false-exp)
+        (eopl:error 'vecinos "Expected a graph, but got an if expression"))
+      (procxd-exp (ids body)
+        (eopl:error 'vecinos "Expected a graph, but got a procedure expression"))
+      (appxd-exp (rator rands)
+        (eopl:error 'vecinos "Expected a graph, but got an application expression"))
+      (beginxd-exp (exp lexps)
+        (eopl:error 'vecinos "Expected a graph, but got a begin expression"))
+      (verticesxd-exp (label)
+        (eopl:error 'vecinos "Expected a graph, but got a vertices expression"))
+      (ejesxd-exp (from to)
+        (eopl:error 'vecinos "Expected a graph, but got an edges expression"))
+      (else
+        (eopl:error 'vecinos "Unexpected expression type")))))
+
+
+
+(define first
+  (lambda (exp)
+    (cases expresion-xp exp
+      (verticesxd-exp (label)
+                      (car label))
+      (ejesxd-exp (from to)
+                  (car (cons from to)))
+      (else (eopl:error "Not a valid list of vertices or edges")))))
+
+
+(define rest
+  (lambda (exp)
+    (cases expresion-xp exp
+      (verticesxd-exp (label)
+                      (cdr label))
+      (ejesxd-exp (from to)
+                  (cdr (cons from to)))
+      (else (eopl:error "Not a valid list of vertices or edges")))))
