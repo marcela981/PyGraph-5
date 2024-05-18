@@ -3,6 +3,9 @@
 ;; Marcela Mazo Castro - 1843612
 ;; marcela.mazo@correounivalle.edu.co
 
+;; Natalia Cordoba Collazos - 2124366
+;; angie.collazos@correounivalle.edu.co
+
 ;************************************************************************************************************************************************************
 
 #| Gramatica definida

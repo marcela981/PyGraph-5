@@ -5,10 +5,14 @@ Este repositorio contiene lo construido para el proyecto final de la materia Fun
 
 ### Autores del proyecto
 + **Marcela Mazo Castro** - 201843612 - marcela.mazo@corrreounivalle.edu.co
++ **Natalia Cordoba Collazos** - 202124366 - angie.collazos@corerounivalle.edu.co
 
 ### Evaluadores del proyecto
 + **Robinson Duque** - Profesor encargado
 + **Mauricio Muñoz** - Monitor de clase
+
+## Link del repositorio
++ **Github** - https://github.com/marcela981/PyGraph-5.git
 
 ### Universidad del valle
 <p align="center">
